@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../sh_warpreduction.h"
 #include "cub/cub.cuh"
 
