@@ -84,7 +84,7 @@ __device__ void rtTraceBVH2(
 	{
 		// Traverse internal nodes until all SIMD lanes have found a leaf.
 
-		while (unsigned int(nodeAddr) < unsigned int(EntrypointSentinel))   // functionally equivalent, but faster
+		while ((unsigned int)nodeAddr < (unsigned int)EntrypointSentinel)   // functionally equivalent, but faster
 		{
 			// Fetch AABBs of the two child nodes.
 
@@ -136,7 +136,11 @@ __device__ void rtTraceBVH2(
 				if (traverseChild0 && traverseChild1)
 				{
 					if (swp)
-						swap(nodeAddr, cnodes.y);
+					{
+    					int temp = nodeAddr;
+    					nodeAddr = cnodes.y;
+    					cnodes.y = temp;
+					}
 					traversalStack[++stackPtr] = cnodes.y;
 				}
 			}

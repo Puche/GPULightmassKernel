@@ -262,7 +262,7 @@ __global__ void rtTraceCWBVHDynamicFetch()
 						}
 					}
 
-					nodeGroup.y = (hitmask & 0xFF000000) | (*((byte*)&n0.w + 3));
+					nodeGroup.y = (hitmask & 0xFF000000) | (*((unsigned char*)&n0.w + 3));
 					triangleGroup.y = hitmask & 0x00FFFFFF;
 				}
 			}

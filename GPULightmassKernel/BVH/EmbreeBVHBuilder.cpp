@@ -9,15 +9,28 @@
 #undef NDEBUG
 #include <cassert>
 
-#pragma comment(lib, "embree_avx.lib")
-#pragma comment(lib, "embree_avx2.lib")
-#pragma comment(lib, "embree_sse42.lib")
-#pragma comment(lib, "embree4.lib")
-#pragma comment(lib, "lexers.lib")
-#pragma comment(lib, "math.lib")
-#pragma comment(lib, "simd.lib")
-#pragma comment(lib, "sys.lib")
-#pragma comment(lib, "tasking.lib")
+#include <cfloat>
+#include <cstdlib>
+
+#ifdef _WIN32
+	#pragma comment(lib, "embree_avx.lib")
+	#pragma comment(lib, "embree_avx2.lib")
+	#pragma comment(lib, "embree_sse42.lib")
+	#pragma comment(lib, "embree4.lib")
+	#pragma comment(lib, "lexers.lib")
+	#pragma comment(lib, "math.lib")
+	#pragma comment(lib, "simd.lib")
+	#pragma comment(lib, "sys.lib")
+	#pragma comment(lib, "tasking.lib")
+#endif
+
+#ifdef _WIN32
+    #define ALIGNED_MALLOC(size, alignment) _aligned_malloc(size, alignment)
+    #define ALIGNED_FREE(ptr) _aligned_free(ptr)
+#else
+    #define ALIGNED_MALLOC(size, alignment) aligned_alloc(alignment, size)
+    #define ALIGNED_FREE(ptr) free(ptr)
+#endif
 
 /* Callback to create a node */
 template <int N>
@@ -299,7 +312,7 @@ EmbreeBVHBuilder::~EmbreeBVHBuilder()
 
 BVH2Node * EmbreeBVHBuilder::BuildBVH2()
 {
-	RTCBuildPrimitive* Primitives = (RTCBuildPrimitive*)_aligned_malloc(sizeof(RTCBuildPrimitive) * NumTriangles * 2, 32);
+	RTCBuildPrimitive* Primitives = (RTCBuildPrimitive*)ALIGNED_MALLOC(sizeof(RTCBuildPrimitive) * NumTriangles * 2, 32);
 
 	tbb::parallel_for(0, NumTriangles, [&](int PrimitiveIndex)
 	{
@@ -342,13 +355,13 @@ BVH2Node * EmbreeBVHBuilder::BuildBVH2()
 		true
 	);
 
-	_aligned_free(Primitives);
+	ALIGNED_FREE(Primitives);
 	return root;
 }
 
 BVH8Node* EmbreeBVHBuilder::BuildBVH8()
 {
-	RTCBuildPrimitive* Primitives = (RTCBuildPrimitive*)_aligned_malloc(sizeof(RTCBuildPrimitive) * NumTriangles * 8, 32);
+	RTCBuildPrimitive* Primitives = (RTCBuildPrimitive*)ALIGNED_MALLOC(sizeof(RTCBuildPrimitive) * NumTriangles * 8, 32);
 
 	tbb::parallel_for(0, NumTriangles, [&](int PrimitiveIndex)
 	{
@@ -393,7 +406,7 @@ BVH8Node* EmbreeBVHBuilder::BuildBVH8()
 		true
 	);
 
-	_aligned_free(Primitives);
+	ALIGNED_FREE(Primitives);
 	return root;
 }
 

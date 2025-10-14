@@ -1,4 +1,6 @@
-#include <Windows.h>
+#ifdef _WIN32
+	#include <Windows.h>
+#endif
 #include <string>
 #include <random>
 #include <ctime>
@@ -28,7 +30,9 @@ void StartProgressReporter()
 	std::mt19937 engine{ rd() };
 	ReportFileName = "GPULIGHTMASS_PROGRESSREPORT_" + std::to_string(engine()) + ".log";
 	ReportProgress("Starting", 0, "", 0, true);
-	ShellExecute(0, NULL, "ProgressReporter.exe", ReportFileName.c_str(), NULL, SW_SHOWNORMAL);
+	#ifdef _WIN32
+		ShellExecute(0, NULL, "ProgressReporter.exe", ReportFileName.c_str(), NULL, SW_SHOWNORMAL);
+	#endif
 }
 
 size_t FinishedTexels = 0;
@@ -56,9 +60,9 @@ void ReportProgressTextureMapping(
 	CurrentBlock++;
 
 	int etaInSeconds = accumulatedGPUTime / 1000.0 / FinishedTexels * (TotalTexels - FinishedTexels);
-	int etaSecond = max(etaInSeconds % 60, 0);
-	int etaMinute = max((etaInSeconds / 60) % 60, 0);
-	int etaHour = max(etaInSeconds / 60 / 60, 0);
+	int etaSecond = std::max(etaInSeconds % 60, 0);
+	int etaMinute = std::max((etaInSeconds / 60) % 60, 0);
+	int etaHour = std::max(etaInSeconds / 60 / 60, 0);
 
 	char progressTextBuffer[256];
 	char overallTextBuffer[256];

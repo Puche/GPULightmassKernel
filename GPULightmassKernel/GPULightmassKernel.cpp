@@ -3,7 +3,12 @@
 #include <algorithm>
 #include <time.h>
 
-#define GPULIGHTMASSKERNEL_LIB
+#include <cstdarg>  // For va_start, va_end
+#include <cstring>  // For memset
+
+#ifdef _WIN32
+	#define GPULIGHTMASSKERNEL_LIB
+#endif
 
 #include <cuda_runtime.h>
 #include "helper_math.h"

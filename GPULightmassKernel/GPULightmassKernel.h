@@ -3,32 +3,41 @@
 namespace GPULightmass
 {
 
+// Platform-specific export/import macros
 #ifdef GPULIGHTMASSKERNEL_LIB
-#define GPULIGHTMASSKERNEL_API extern "C" __declspec(dllexport)
+    #ifdef _WIN32
+        #define GPULIGHTMASSKERNEL_API extern "C" __declspec(dllexport)
+    #else
+        #define GPULIGHTMASSKERNEL_API extern "C" __attribute__((visibility("default")))
+    #endif
 #else
+    #ifdef _WIN32
+        #define GPULIGHTMASSKERNEL_API extern "C" __declspec(dllimport)
+    #else
+        #define GPULIGHTMASSKERNEL_API extern "C"
+    #endif
 
-#define GPULIGHTMASSKERNEL_API extern "C" __declspec(dllimport)
+    // Only define these structures when NOT compiling the library
+    // (for client-side use only)
+    struct int3
+    {
+        int x, y, z;
+    };
 
-struct int3
-{
-	int x, y, z;
-};
+    struct float2
+    {
+        float x, y;
+    };
 
-struct float2
-{
-	float x, y;
-};
+    struct float3
+    {
+        float x, y, z;
+    };
 
-struct float3
-{
-	float x, y, z;
-};
-
-struct float4
-{
-	float x, y, z, w;
-};
-
+    struct float4
+    {
+        float x, y, z, w;
+    };
 #endif
 
 struct shvector2

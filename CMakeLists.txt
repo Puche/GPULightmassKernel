@@ -60,8 +60,13 @@ set(HEADER_FILES
     GPULightmassKernel/StringUtils.h
 )
 
+
+
 # Create shared library
 add_library(${PROJECT_NAME} SHARED ${CPP_SOURCES} ${CUDA_SOURCES} ${HEADER_FILES})
+
+# Define that we're building the library
+target_compile_definitions(${PROJECT_NAME} PRIVATE GPULIGHTMASSKERNEL_LIB)
 
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -85,15 +90,23 @@ if(EMBREE_INCLUDE_DIR)
     message(STATUS "Found local Embree: ${EMBREE_INCLUDE_DIR}")
     target_include_directories(${PROJECT_NAME} PRIVATE ${EMBREE_INCLUDE_DIR})
     
-    # Find Embree libraries
+    # Find Embree static library
     find_library(EMBREE_LIBRARY 
-        NAMES embree4 embree
+        NAMES libembree4.a embree4 libembree.a embree
         PATHS ${CMAKE_CURRENT_SOURCE_DIR}/embree_static/lib
         NO_DEFAULT_PATH
     )
     
     if(EMBREE_LIBRARY)
-        target_link_libraries(${PROJECT_NAME} PRIVATE ${EMBREE_LIBRARY})
+        # Force static linking by using -Wl,--whole-archive
+        if(UNIX AND NOT APPLE)
+            target_link_libraries(${PROJECT_NAME} PRIVATE 
+                -Wl,--whole-archive ${EMBREE_LIBRARY} -Wl,--no-whole-archive
+            )
+        else()
+            target_link_libraries(${PROJECT_NAME} PRIVATE ${EMBREE_LIBRARY})
+        endif()
+        message(STATUS "Statically linking Embree: ${EMBREE_LIBRARY}")
     else()
         message(FATAL_ERROR "Embree library not found in ${CMAKE_CURRENT_SOURCE_DIR}/embree_static/lib")
     endif()
@@ -113,17 +126,27 @@ if(TBB_INCLUDE_DIR)
     message(STATUS "Found local TBB: ${TBB_INCLUDE_DIR}")
     target_include_directories(${PROJECT_NAME} PRIVATE ${TBB_INCLUDE_DIR})
     
-    # Find TBB library
+    # Find TBB static library
     find_library(TBB_LIBRARY 
-        NAMES tbb
+        NAMES libtbb.a tbb
         PATHS 
-            ${CMAKE_CURRENT_SOURCE_DIR}/tbb2019_20190605oss/lib/intel64/gcc4.8
+            ${CMAKE_CURRENT_SOURCE_DIR}/tbb2019_20190605oss/lib/intel64/gcc4.7
+            ${CMAKE_CURRENT_SOURCE_DIR}/tbb2019_20190605oss/lib/intel64/gcc4.4
+            ${CMAKE_CURRENT_SOURCE_DIR}/tbb2019_20190605oss/lib/intel64/gcc4.1
             ${CMAKE_CURRENT_SOURCE_DIR}/tbb2019_20190605oss/lib
         NO_DEFAULT_PATH
     )
     
     if(TBB_LIBRARY)
-        target_link_libraries(${PROJECT_NAME} PRIVATE ${TBB_LIBRARY})
+        # Force static linking by using -Wl,--whole-archive
+        if(UNIX AND NOT APPLE)
+            target_link_libraries(${PROJECT_NAME} PRIVATE 
+                -Wl,--whole-archive ${TBB_LIBRARY} -Wl,--no-whole-archive
+            )
+        else()
+            target_link_libraries(${PROJECT_NAME} PRIVATE ${TBB_LIBRARY})
+        endif()
+        message(STATUS "Statically linking TBB: ${TBB_LIBRARY}")
     else()
         message(FATAL_ERROR "TBB library not found in ${CMAKE_CURRENT_SOURCE_DIR}/tbb2019_20190605oss/lib")
     endif()
@@ -131,6 +154,10 @@ else()
     # Fallback to system TBB
     find_package(TBB REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE TBB::tbb)
+endif()
+
+if(UNIX AND NOT APPLE)
+    target_link_libraries(${PROJECT_NAME} PRIVATE pthread dl)
 endif()
 
 # Link CUDA libraries
@@ -172,6 +199,8 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(${PROJECT_NAME} PRIVATE
         -O3
         -march=native
+        -Wno-changes-meaning  # Fix for old TBB with modern GCC
+        -Wno-deprecated-declarations  # Suppress wstring_convert deprecation warnings
     )
 endif()
 

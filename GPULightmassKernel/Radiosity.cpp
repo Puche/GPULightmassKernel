@@ -4,6 +4,8 @@
 #include "Radiosity.h"
 #include "ProgressReport.h"
 
+#include <cstring>  // For memcpy
+
 std::vector<SurfaceCacheDataPointers> SurfaceCaches;
 
 void PreallocSurfaceCachePointers(const int Num)
